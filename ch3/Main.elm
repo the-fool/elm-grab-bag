@@ -1,46 +1,71 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text)
+import Html exposing (Html, div, button, text)
+import Html.Events exposing (onClick)
 import Html.App
-import Mouse
-import Keyboard
+import Http
+import Task exposing (Task)
+import Json.Decode as Decode
+import Random
+
+
+-- MODEL
 
 
 type alias Model =
-    Int
+    String
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( 0, Cmd.none )
+    ( "", Cmd.none )
 
 
 type Msg
-    = MouseMsg Mouse.Position
-    | KeyMsg Keyboard.KeyCode
+    = Fetch
+    | FetchSuccess String
+    | FetchError Http.Error
 
 
 view : Model -> Html Msg
 view model =
-    div [] [ text (toString model) ]
+    div []
+        [ button [ onClick Fetch ] [ text "Fetcher" ]
+        , text model
+        ]
+
+
+decode : Decode.Decoder String
+decode =
+    Decode.at [ "name" ] Decode.string
+
+
+url : String
+url =
+    "http://swapi.co/api/planets/1/?format=json"
+
+
+fetchTask : Task Http.Error String
+fetchTask =
+    Http.get decode url
+
+
+fetchCmd : Cmd Msg
+fetchCmd =
+    Task.perform FetchError FetchSuccess fetchTask
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MouseMsg position ->
-            ( model + 1, Cmd.none )
+        Fetch ->
+            ( model, fetchCmd )
 
-        KeyMsg code ->
-            ( model + 2, Cmd.none )
+        FetchSuccess name ->
+            ( name, Cmd.none )
 
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Mouse.clicks MouseMsg
-        , Keyboard.downs KeyMsg
-        ]
+        FetchError error ->
+            ( toString error, Cmd.none )
 
 
 main : Program Never
@@ -49,5 +74,5 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = (always Sub.none)
         }

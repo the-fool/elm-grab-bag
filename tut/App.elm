@@ -1,72 +1,57 @@
 module App exposing (..)
 
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
-
-
--- import Html.Events exposing (onClick)
-
+import Html exposing (Html)
 import Html.App
+import Widget
 
 
 -- Model
 
 
-type alias Model =
-    Bool
+type alias AppModel =
+    { widgetModel : Widget.Model }
 
 
-init : ( Model, Cmd Msg )
+initialModel : AppModel
+initialModel =
+    { widgetModel = Widget.initialModel
+    }
+
+
+init : ( AppModel, Cmd Msg )
 init =
-    ( False, Cmd.none )
+    ( initialModel, Cmd.none )
 
 
 type Msg
-    = Expand
-    | Collapse
+    = WidgetMsg Widget.Msg
 
 
 
 -- View
 
 
-view : Model -> Html Msg
+view : AppModel -> Html Msg
 view model =
-    if model then
-        div []
-            [ button [ onClick Collapse ] [ text "Collapse" ]
-            , text "Gadget"
-            ]
-    else
-        div []
-            [ button [ onClick Expand ] [ text "Expand" ] ]
+    Html.div []
+        [ Html.App.map WidgetMsg (Widget.view model.widgetModel)
+        ]
 
 
-
--- Update
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Expand ->
-            ( True, Cmd.none )
-
-        Collapse ->
-            ( False, Cmd.none )
+update : Msg -> AppModel -> ( AppModel, Cmd Msg )
+update message model =
+    case message of
+        WidgetMsg subMsg ->
+            let
+                ( updatedWidgetModel, widgetCmd ) =
+                    Widget.update subMsg model.widgetModel
+            in
+                ( { model | widgetModel = updatedWidgetModel }, Cmd.map WidgetMsg widgetCmd )
 
 
-
--- Subs
-
-
-subscriptions : Model -> Sub Msg
+subscriptions : AppModel -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-
--- Main
 
 
 main : Program Never
