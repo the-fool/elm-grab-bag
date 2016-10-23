@@ -7,3 +7,5 @@ import Players.Models exposing (Player, PlayerId)
 type Msg
     = FetchAllDone (List Player)
     | FetchAllFail Http.Error
+    | ShowPlayers
+    | ShowPlayer PlayerId
